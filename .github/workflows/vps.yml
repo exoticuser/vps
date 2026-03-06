@@ -43,8 +43,6 @@ jobs:
           # Set a random password for the runner user
           RUNNER_PASS=$(openssl rand -hex 16)
           echo "runner:${RUNNER_PASS}" | sudo chpasswd
-          # Mask the password so it is redacted from all future log output
-          echo "::add-mask::${RUNNER_PASS}"
           echo "RUNNER_PASS=${RUNNER_PASS}" >> $GITHUB_ENV
 
           # Start SSH server
@@ -65,19 +63,38 @@ jobs:
           tmate -S /tmp/tmate.sock new-session -d
           tmate -S /tmp/tmate.sock wait tmate-ready
 
+          # Retrieve tmate connection strings
+          TMATE_WEB=$(tmate -S /tmp/tmate.sock display -p '#{tmate_web}')
+          TMATE_SSH=$(tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}')
+
           # Print SSH connection info
           echo "============================================"
           echo "      VPS SSH CONNECTION DETAILS"
           echo "============================================"
           echo ""
-          echo "SSH command (web):"
-          tmate -S /tmp/tmate.sock display -p '#{tmate_web}'
+          echo ">>> CONNECT FROM TERMUX / TERMINAL <<<"
+          echo "Copy and paste this command into Termux or any terminal:"
           echo ""
-          echo "SSH command (terminal):"
-          tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}'
+          echo "  $TMATE_SSH"
           echo ""
-          echo "Runner username: runner"
-          echo "Runner password: $RUNNER_PASS"
+          echo "(No password needed — just run the command above)"
+          echo ""
+          echo "--------------------------------------------"
+          echo ""
+          echo ">>> CONNECT FROM BROWSER <<<"
+          echo "Open this URL in your browser:"
+          echo ""
+          echo "  $TMATE_WEB"
+          echo ""
+          echo "--------------------------------------------"
+          echo ""
+          echo ">>> RUNNER CREDENTIALS <<<"
+          echo "Username: runner"
+          echo "Password: $RUNNER_PASS"
+          echo ""
+          echo "(Use these credentials if prompted for a"
+          echo " password inside the tmate session, or for"
+          echo " sudo access once connected.)"
           echo ""
           echo "Session timeout: ${{ github.event.inputs.timeout_minutes }} minutes"
           echo "============================================"
