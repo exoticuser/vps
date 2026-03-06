@@ -22,7 +22,7 @@ The **VPS SSH Access** workflow:
 4. (Optional) Set the **Session timeout in minutes** input (1–360). Default is 60.
 5. Click **Run workflow** to start.
 
-### 2. Get the SSH connection string
+### 2. Get the SSH connection details
 
 1. Open the running workflow job.
 2. Expand the **"Start tmate session and display SSH connection info"** step.
@@ -33,38 +33,58 @@ The **VPS SSH Access** workflow:
       VPS SSH CONNECTION DETAILS
 ============================================
 
-SSH command (web):
-https://tmate.io/t/XXXXXXXXXXXXXXXX
+>>> CONNECT FROM TERMUX / TERMINAL <<<
+Copy and paste this command into Termux or any terminal:
 
-SSH command (terminal):
-ssh XXXXXXXXXXXXXXXX@nyc1.tmate.io
+  ssh XXXXXXXXXXXXXXXX@nyc1.tmate.io
 
-Runner username: runner
-Runner password: <generated-password>
+(No password needed — just run the command above)
+
+--------------------------------------------
+
+>>> CONNECT FROM BROWSER <<<
+Open this URL in your browser:
+
+  https://tmate.io/t/XXXXXXXXXXXXXXXX
+
+--------------------------------------------
+
+>>> RUNNER CREDENTIALS <<<
+Username: runner
+Password: <generated-password>
+
+(Use these credentials if prompted for a
+ password inside the tmate session, or for
+ sudo access once connected.)
 
 Session timeout: 60 minutes
 ============================================
 ```
 
-### 3. Connect via SSH
+### 3. Connect via SSH (Termux / Terminal)
 
-Copy the **SSH command (terminal)** and run it in your local terminal:
+Copy the SSH command shown in the logs and paste it directly into Termux or any terminal:
 
 ```bash
 ssh XXXXXXXXXXXXXXXX@nyc1.tmate.io
 ```
 
-Enter the **Runner password** shown in the logs when prompted.
+**No password is required** to connect — you will get a shell immediately.
 
-Alternatively, open the **SSH command (web)** URL in your browser for a browser-based terminal.
+Once connected, use the **Runner credentials** from the logs for `sudo` commands.
 
-### 4. End the session
+### 4. Connect via Browser
 
-The session ends automatically when the timeout expires. To end it early, cancel the running workflow job from the GitHub Actions UI.
+Open the **web URL** from the logs in your browser for a browser-based terminal.
+
+### 5. End the session
+
+The session ends automatically when the timeout expires. To end it early, cancel the running workflow run from the GitHub Actions UI.
 
 ## Notes
 
 - Each session uses a **fresh, ephemeral Ubuntu runner**. Nothing persists between sessions.
 - The runner has `sudo` access, so you can install any software you need.
-- The SSH password is randomly generated per session and displayed only in the workflow logs (visible to repository collaborators with Actions access).
+- The tmate SSH command (`ssh TOKEN@nyc1.tmate.io`) connects you directly — **no password needed**.
+- The runner password is randomly generated per session and displayed in the workflow logs. Use it for `sudo` once connected.
 - Session duration is limited by GitHub Actions' maximum job runtime (6 hours).
