@@ -1,0 +1,116 @@
+name: VPS SSH Access
+
+on:
+  workflow_dispatch:
+    inputs:
+      timeout_minutes:
+        description: 'Session timeout in minutes (max 360)'
+        required: false
+        default: '60'
+
+jobs:
+  vps:
+    name: Start VPS with SSH Access
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Update system packages
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y curl wget
+
+      - name: Set up SSH server
+        run: |
+          # Install and configure OpenSSH server
+          sudo apt-get install -y openssh-server
+
+          # Create SSH directory
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          # Allow password authentication for this session
+          sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          sudo sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
+          sudo sed -i 's/^#\?ChallengeResponseAuthentication.*/ChallengeResponseAuthentication yes/' /etc/ssh/sshd_config
+          sudo sed -i 's/^#\?KbdInteractiveAuthentication.*/KbdInteractiveAuthentication yes/' /etc/ssh/sshd_config
+
+          # Set a random password for the runner user
+          RUNNER_PASS=$(openssl rand -hex 16)
+          echo "runner:${RUNNER_PASS}" | sudo chpasswd
+          # Mask the password so it is redacted from all future log output
+          echo "::add-mask::${RUNNER_PASS}"
+          echo "RUNNER_PASS=${RUNNER_PASS}" >> $GITHUB_ENV
+
+          # Start SSH server
+          sudo service ssh start || sudo systemctl start ssh
+          sudo service ssh status || sudo systemctl status ssh
+
+      - name: Install tmate for SSH tunnel
+        run: |
+          # Install tmate
+          curl -fsSL https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-amd64.tar.xz \
+            -o /tmp/tmate.tar.xz
+          tar -xf /tmp/tmate.tar.xz -C /tmp
+          sudo mv /tmp/tmate-2.4.0-static-linux-amd64/tmate /usr/local/bin/tmate
+
+      - name: Start tmate session and display SSH connection info
+        run: |
+          # Start tmate in a new session (detached)
+          tmate -S /tmp/tmate.sock new-session -d
+          tmate -S /tmp/tmate.sock wait tmate-ready
+
+          # Print SSH connection info
+          echo "============================================"
+          echo "      VPS SSH CONNECTION DETAILS"
+          echo "============================================"
+          echo ""
+          echo "SSH command (web):"
+          tmate -S /tmp/tmate.sock display -p '#{tmate_web}'
+          echo ""
+          echo "SSH command (terminal):"
+          tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}'
+          echo ""
+          echo "Runner username: runner"
+          echo "Runner password: $RUNNER_PASS"
+          echo ""
+          echo "Session timeout: ${{ github.event.inputs.timeout_minutes }} minutes"
+          echo "============================================"
+
+      - name: Keep session alive
+        run: |
+          TIMEOUT_MINUTES="${{ github.event.inputs.timeout_minutes }}"
+          TIMEOUT_MINUTES="${TIMEOUT_MINUTES:-60}"
+
+          # Clamp timeout to max 360 minutes
+          if [ "$TIMEOUT_MINUTES" -gt 360 ]; then
+            TIMEOUT_MINUTES=360
+          fi
+
+          TIMEOUT_SECONDS=$((TIMEOUT_MINUTES * 60))
+          ELAPSED=0
+          INTERVAL=30
+
+          echo "Session will remain active for up to ${TIMEOUT_MINUTES} minutes."
+          echo "Close this workflow run to terminate the session early."
+          echo ""
+
+          while [ "$ELAPSED" -lt "$TIMEOUT_SECONDS" ]; do
+            sleep "$INTERVAL"
+            ELAPSED=$((ELAPSED + INTERVAL))
+            REMAINING=$(( (TIMEOUT_SECONDS - ELAPSED) / 60 ))
+            echo "Session active — ${REMAINING} minute(s) remaining..."
+
+            # Check tmate is still running
+            if ! tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}' > /dev/null 2>&1; then
+              echo "tmate session ended."
+              break
+            fi
+          done
+
+          echo "Session ended."
