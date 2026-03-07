@@ -98,7 +98,7 @@ jobs:
           echo "SSH host/IP: $SSH_TARGET"
           echo "SSH port: $SSH_PORT"
           if [ -z "$SSH_IP" ]; then
-            echo "Note: IP lookup via getent ahostsv4 was unavailable, so use the SSH host shown above."
+            echo "Note: Numeric IP address unavailable; use the SSH host shown above."
           fi
           echo ""
           echo "Termux command:"

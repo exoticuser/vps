@@ -67,7 +67,7 @@ ssh XXXXXXXXXXXXXXXX@203.0.113.10 -p 22
 
 No separate SSH password is required for that login command.
 
-If DNS resolution fails during the workflow run, the `SSH host/IP` field will show the hostname (for example, `nyc1.tmate.io`) instead of a numeric IP address. In that case, use that hostname directly in the same command format.
+If a numeric IP address cannot be resolved during the workflow run, the `SSH host/IP` field will show the hostname (for example, `nyc1.tmate.io`) instead. In that case, use that hostname directly in the same command format.
 
 Once connected, use the **Runner credentials** from the logs for `sudo` commands.
 
