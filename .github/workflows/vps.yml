@@ -75,13 +75,14 @@ jobs:
             exit 1
           fi
           case "$SSH_PORT" in
-            ''|*[!0-9]*)
+            *[!0-9]*)
               echo "Invalid SSH port extracted from tunnel output:"
               echo "  $TMATE_SSH"
               exit 1
               ;;
           esac
-          SSH_IP=$(getent ahostsv4 "$SSH_HOST" | awk 'NR == 1 {print $1}')
+          GETENT_OUTPUT=$(getent ahostsv4 "$SSH_HOST" 2>/dev/null || true)
+          SSH_IP=$(printf '%s\n' "$GETENT_OUTPUT" | awk 'NR == 1 {print $1}')
           SSH_TARGET=${SSH_IP:-$SSH_HOST}
 
           # Print SSH connection info
@@ -97,7 +98,7 @@ jobs:
           echo "SSH host/IP: $SSH_TARGET"
           echo "SSH port: $SSH_PORT"
           if [ -z "$SSH_IP" ]; then
-            echo "Note: IP lookup was unavailable, so use the SSH host shown above."
+            echo "Note: IP lookup via getent ahostsv4 was unavailable, so use the SSH host shown above."
           fi
           echo ""
           echo "Termux command:"
