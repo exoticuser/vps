@@ -65,6 +65,14 @@ jobs:
 
           TMATE_SSH=$(tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}')
           SSH_USER_HOST=$(printf '%s\n' "$TMATE_SSH" | awk '{print $2}')
+          case "$SSH_USER_HOST" in
+            *@*) ;;
+            *)
+              echo "Failed to extract SSH login details from tunnel output:"
+              echo "  $TMATE_SSH"
+              exit 1
+              ;;
+          esac
           SSH_USERNAME=${SSH_USER_HOST%@*}
           SSH_HOST=${SSH_USER_HOST#*@}
           SSH_PORT=$(printf '%s\n' "$TMATE_SSH" | awk '{for (i = 1; i <= NF; i++) if ($i == "-p") {print $(i + 1); exit}}')
@@ -96,10 +104,10 @@ jobs:
           echo "SSH username: $SSH_USERNAME"
           echo "SSH host: $SSH_HOST"
           echo "SSH host/IP: $SSH_TARGET"
-          echo "SSH port: $SSH_PORT"
           if [ -z "$SSH_IP" ]; then
             echo "Note: Numeric IP address unavailable; use the SSH host shown above."
           fi
+          echo "SSH port: $SSH_PORT"
           echo ""
           echo "Termux command:"
           echo "  ssh $SSH_USERNAME@$SSH_TARGET -p $SSH_PORT"
