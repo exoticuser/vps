@@ -49,7 +49,7 @@ jobs:
           sudo service ssh start || sudo systemctl start ssh
           sudo service ssh status || sudo systemctl status ssh
 
-      - name: Install tmate for SSH tunnel
+      - name: Install SSH tunnel client
         run: |
           # Install tmate
           curl -fsSL https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-amd64.tar.xz \
@@ -57,15 +57,20 @@ jobs:
           tar -xf /tmp/tmate.tar.xz -C /tmp
           sudo mv /tmp/tmate-2.4.0-static-linux-amd64/tmate /usr/local/bin/tmate
 
-      - name: Start tmate session and display SSH connection info
+      - name: Start SSH session and display SSH login info
         run: |
           # Start tmate in a new session (detached)
           tmate -S /tmp/tmate.sock new-session -d
           tmate -S /tmp/tmate.sock wait tmate-ready
 
-          # Retrieve tmate connection strings
-          TMATE_WEB=$(tmate -S /tmp/tmate.sock display -p '#{tmate_web}')
           TMATE_SSH=$(tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}')
+          SSH_USER_HOST=$(printf '%s\n' "$TMATE_SSH" | awk '{print $2}')
+          SSH_USERNAME=${SSH_USER_HOST%@*}
+          SSH_HOST=${SSH_USER_HOST#*@}
+          SSH_PORT=$(printf '%s\n' "$TMATE_SSH" | awk '{for (i = 1; i <= NF; i++) if ($i == "-p") {print $(i + 1); exit}}')
+          SSH_PORT=${SSH_PORT:-22}
+          SSH_IP=$(getent ahostsv4 "$SSH_HOST" | awk 'NR == 1 {print $1}')
+          SSH_IP=${SSH_IP:-$SSH_HOST}
 
           # Print SSH connection info
           echo "============================================"
@@ -73,18 +78,14 @@ jobs:
           echo "============================================"
           echo ""
           echo ">>> CONNECT FROM TERMUX / TERMINAL <<<"
-          echo "Copy and paste this command into Termux or any terminal:"
+          echo "Use these SSH details in Termux:"
           echo ""
-          echo "  $TMATE_SSH"
+          echo "SSH username: $SSH_USERNAME"
+          echo "SSH IP: $SSH_IP"
+          echo "SSH port: $SSH_PORT"
           echo ""
-          echo "(No password needed — just run the command above)"
-          echo ""
-          echo "--------------------------------------------"
-          echo ""
-          echo ">>> CONNECT FROM BROWSER <<<"
-          echo "Open this URL in your browser:"
-          echo ""
-          echo "  $TMATE_WEB"
+          echo "Termux command:"
+          echo "  ssh $SSH_USERNAME@$SSH_IP -p $SSH_PORT"
           echo ""
           echo "--------------------------------------------"
           echo ""
@@ -92,9 +93,8 @@ jobs:
           echo "Username: runner"
           echo "Password: $RUNNER_PASS"
           echo ""
-          echo "(Use these credentials if prompted for a"
-          echo " password inside the tmate session, or for"
-          echo " sudo access once connected.)"
+          echo "(Use these credentials for sudo once"
+          echo " connected to the SSH session.)"
           echo ""
           echo "Session timeout: ${{ github.event.inputs.timeout_minutes }} minutes"
           echo "============================================"
