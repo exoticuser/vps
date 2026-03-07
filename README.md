@@ -8,8 +8,8 @@ The **VPS SSH Access** workflow:
 
 1. Provisions an Ubuntu runner on GitHub Actions.
 2. Installs and starts an OpenSSH server on the runner.
-3. Creates a secure tunnel using [tmate](https://tmate.io/) that exposes the runner's SSH port to the internet.
-4. Prints the SSH connection string in the workflow logs.
+3. Creates a temporary SSH tunnel so the runner can be reached from Termux or any terminal.
+4. Prints the SSH username, host, host/IP, and port in the workflow logs.
 5. Keeps the session alive for the requested number of minutes (default: 60, max: 360).
 
 ## Usage
@@ -25,7 +25,7 @@ The **VPS SSH Access** workflow:
 ### 2. Get the SSH connection details
 
 1. Open the running workflow job.
-2. Expand the **"Start tmate session and display SSH connection info"** step.
+2. Expand the **"Start SSH session and display SSH login info"** step.
 3. You will see output similar to:
 
 ```
@@ -34,18 +34,15 @@ The **VPS SSH Access** workflow:
 ============================================
 
 >>> CONNECT FROM TERMUX / TERMINAL <<<
-Copy and paste this command into Termux or any terminal:
+Use these SSH details in Termux:
 
-  ssh XXXXXXXXXXXXXXXX@nyc1.tmate.io
+SSH username: XXXXXXXXXXXXXXXX
+SSH host: nyc1.tmate.io
+SSH host/IP: 203.0.113.10
+SSH port: 22
 
-(No password needed — just run the command above)
-
---------------------------------------------
-
->>> CONNECT FROM BROWSER <<<
-Open this URL in your browser:
-
-  https://tmate.io/t/XXXXXXXXXXXXXXXX
+Termux command:
+  ssh XXXXXXXXXXXXXXXX@203.0.113.10 -p 22
 
 --------------------------------------------
 
@@ -53,9 +50,8 @@ Open this URL in your browser:
 Username: runner
 Password: <generated-password>
 
-(Use these credentials if prompted for a
- password inside the tmate session, or for
- sudo access once connected.)
+(Use these credentials for sudo once
+ connected to the SSH session.)
 
 Session timeout: 60 minutes
 ============================================
@@ -63,21 +59,19 @@ Session timeout: 60 minutes
 
 ### 3. Connect via SSH (Termux / Terminal)
 
-Copy the SSH command shown in the logs and paste it directly into Termux or any terminal:
+Use the SSH username, host/IP, and port shown in the logs:
 
 ```bash
-ssh XXXXXXXXXXXXXXXX@nyc1.tmate.io
+ssh XXXXXXXXXXXXXXXX@203.0.113.10 -p 22
 ```
 
-**No password is required** to connect — you will get a shell immediately.
+No separate SSH password is required for that login command.
+
+If a numeric IP address cannot be resolved during the workflow run, the `SSH host/IP` field will show the hostname (for example, `nyc1.tmate.io`) instead. In that case, use that hostname directly in the same command format.
 
 Once connected, use the **Runner credentials** from the logs for `sudo` commands.
 
-### 4. Connect via Browser
-
-Open the **web URL** from the logs in your browser for a browser-based terminal.
-
-### 5. End the session
+### 4. End the session
 
 The session ends automatically when the timeout expires. To end it early, cancel the running workflow run from the GitHub Actions UI.
 
@@ -85,6 +79,6 @@ The session ends automatically when the timeout expires. To end it early, cancel
 
 - Each session uses a **fresh, ephemeral Ubuntu runner**. Nothing persists between sessions.
 - The runner has `sudo` access, so you can install any software you need.
-- The tmate SSH command (`ssh TOKEN@nyc1.tmate.io`) connects you directly — **no password needed**.
+- The workflow logs show the SSH username, host, host/IP, and port you need for Termux.
 - The runner password is randomly generated per session and displayed in the workflow logs. Use it for `sudo` once connected.
 - Session duration is limited by GitHub Actions' maximum job runtime (6 hours).
