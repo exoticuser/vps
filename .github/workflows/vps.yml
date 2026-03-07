@@ -81,7 +81,7 @@ jobs:
           echo "Use these SSH details in Termux:"
           echo ""
           echo "SSH username: $SSH_USERNAME"
-          echo "SSH IP: $SSH_IP"
+          echo "SSH host/IP: $SSH_IP"
           echo "SSH port: $SSH_PORT"
           echo ""
           echo "Termux command:"

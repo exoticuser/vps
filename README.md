@@ -9,7 +9,7 @@ The **VPS SSH Access** workflow:
 1. Provisions an Ubuntu runner on GitHub Actions.
 2. Installs and starts an OpenSSH server on the runner.
 3. Creates a temporary SSH tunnel so the runner can be reached from Termux or any terminal.
-4. Prints the SSH username, IP, and port in the workflow logs.
+4. Prints the SSH username, host/IP, and port in the workflow logs.
 5. Keeps the session alive for the requested number of minutes (default: 60, max: 360).
 
 ## Usage
@@ -37,7 +37,7 @@ The **VPS SSH Access** workflow:
 Use these SSH details in Termux:
 
 SSH username: XXXXXXXXXXXXXXXX
-SSH IP: 203.0.113.10
+SSH host/IP: 203.0.113.10
 SSH port: 22
 
 Termux command:
@@ -58,7 +58,7 @@ Session timeout: 60 minutes
 
 ### 3. Connect via SSH (Termux / Terminal)
 
-Use the SSH username, IP, and port shown in the logs:
+Use the SSH username, host/IP, and port shown in the logs:
 
 ```bash
 ssh XXXXXXXXXXXXXXXX@203.0.113.10 -p 22
@@ -76,6 +76,6 @@ The session ends automatically when the timeout expires. To end it early, cancel
 
 - Each session uses a **fresh, ephemeral Ubuntu runner**. Nothing persists between sessions.
 - The runner has `sudo` access, so you can install any software you need.
-- The workflow logs show the SSH username, IP, and port you need for Termux.
+- The workflow logs show the SSH username, host/IP, and port you need for Termux.
 - The runner password is randomly generated per session and displayed in the workflow logs. Use it for `sudo` once connected.
 - Session duration is limited by GitHub Actions' maximum job runtime (6 hours).
